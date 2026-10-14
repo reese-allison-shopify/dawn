@@ -27,7 +27,12 @@ class CartItems extends window.StandardEvents.createViewEventElement(HTMLElement
       if (event.key !== 'Enter' || !event.target.matches('.quantity__input')) return;
 
       event.preventDefault();
-      event.target.blur();
+      const input = event.target;
+      const onChange = () => (this.enterPressedInput = input);
+      input.addEventListener('change', onChange, { once: true });
+      input.blur();
+      input.removeEventListener('change', onChange);
+      if (this.enterPressedInput !== input) input.focus();
     });
   }
 
@@ -84,6 +89,9 @@ class CartItems extends window.StandardEvents.createViewEventElement(HTMLElement
   }
 
   validateQuantity(event) {
+    const name =
+      this.enterPressedInput === event.target ? event.target.name : document.activeElement.getAttribute('name');
+    this.enterPressedInput = null;
     const inputValue = parseInt(event.target.value);
     const index = event.target.dataset.index;
     let message = '';
@@ -105,7 +113,7 @@ class CartItems extends window.StandardEvents.createViewEventElement(HTMLElement
         index,
         inputValue,
         event,
-        document.activeElement.getAttribute('name'),
+        name,
         event.target.dataset.quantityVariantId
       );
     }
@@ -216,6 +224,9 @@ class CartItems extends window.StandardEvents.createViewEventElement(HTMLElement
           if (parsedState.errors) {
             quantityElement.value = quantityElement.getAttribute('value');
             this.updateLiveRegions(line, parsedState.errors);
+            this.querySelector(`#CartItem-${line}, #CartDrawer-Item-${line}`)
+              ?.querySelector(`[name="${name}"]`)
+              ?.focus();
             return;
           }
 
